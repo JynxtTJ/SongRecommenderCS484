@@ -1,6 +1,6 @@
-import pandas
+import pandas as pd
 import numpy as np
 
-data = pd.read_csv('../data/parsed_data.csv')
+data = pd.read_csv('../data/data.csv')
 data.head()
 
