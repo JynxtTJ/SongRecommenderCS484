@@ -78,21 +78,15 @@ def get_data(filename):
     song_datum.append(GETTERS.get_year(h5))
 
     release = GETTERS.get_release(h5)
-    release = str(release)
-    release = release.replace("b'", "")
-    release = release.replace('"b"', "")
+    release = release.decode('utf-8')
     song_datum.append(release)
 
     artist_name = GETTERS.get_artist_name(h5)
-    artist_name = str(artist_name)
-    artist_name = artist_name.replace("b'", "")
-    artist_name = artist_name.replace('"b"', "")
+    artist_name = artist_name.decode('utf-8')
     song_datum.append(artist_name)  # shape = 1 (datum is string)
 
     title = GETTERS.get_title(h5)
-    title = str(title)
-    title = title.replace("b'", "")
-    title = title.replace('"b"', "")
+    title = title.decode('utf-8')
     song_datum.append(title)
 
     data_set.append(song_datum)
@@ -106,3 +100,4 @@ main_dataframe = pd.DataFrame(data_set,
                                        'year', 'album', 'artist name', 'title'])
 
 main_dataframe.to_csv('data/data.csv')
+
