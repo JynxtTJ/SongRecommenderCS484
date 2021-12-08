@@ -53,33 +53,47 @@ def func_to_get_artist_name(filename):
 
 
 def get_data(filename):
-
     h5 = GETTERS.open_h5_file_read(filename)
 
     song_datum = []
 
-    song_datum.append(GETTERS.get_key(h5)) # shape = 1 [1, 12]
-    song_datum.append(GETTERS.get_key_confidence(h5)) # shape = 1
+    song_datum.append(GETTERS.get_key(h5))  # shape = 1 [1, 12]
+    song_datum.append(GETTERS.get_key_confidence(h5))  # shape = 1
     # These are interested as we can weight our key_score based on the key_conf by simple multiplication.
 
     song_datum.append(GETTERS.get_duration(h5))
-    song_datum.append(GETTERS.get_artist_hotttnesss(h5)) # shape = 1 (on range [0,1])
+    song_datum.append(GETTERS.get_artist_hotttnesss(h5))  # shape = 1 (on range [0,1])
     song_datum.append(GETTERS.get_energy(h5))  # shape = 1 (on range [0, 1])
-    song_datum.append(GETTERS.get_loudness(h5)) # shape = 1 (db range)
+    song_datum.append(GETTERS.get_loudness(h5))  # shape = 1 (db range)
 
     # WE want similar songs, not artists, while artists is useful we cannot simply base our
     # recommendation off an artist that is similar.
     # similar_artists = GETTERS.get_similar_artists(h5)  # shape = (935,0) (datum is string)
 
-    song_datum.append(GETTERS.get_tempo(h5)) # shape = 1 (datum is BPM)
+    song_datum.append(GETTERS.get_tempo(h5))  # shape = 1 (datum is BPM)
 
     # HIHGLY INTERESTING FEATURE.
     # chroma_pitches.append(GETTERS.get_segments_pitches(h5))  # = shape (935, 12) normallized so range [0, 1]
 
     song_datum.append(GETTERS.get_year(h5))
-    song_datum.append(GETTERS.get_release(h5))
-    song_datum.append(GETTERS.get_artist_name(h5)) # shape = 1 (datum is string)
-    song_datum.append(GETTERS.get_title(h5))
+
+    release = GETTERS.get_release(h5)
+    release = str(release)
+    release = release.replace("b'", "")
+    release = release.replace('"b"', "")
+    song_datum.append(release)
+
+    artist_name = GETTERS.get_artist_name(h5)
+    artist_name = str(artist_name)
+    artist_name = artist_name.replace("b'", "")
+    artist_name = artist_name.replace('"b"', "")
+    song_datum.append(artist_name)  # shape = 1 (datum is string)
+
+    title = GETTERS.get_title(h5)
+    title = str(title)
+    title = title.replace("b'", "")
+    title = title.replace('"b"', "")
+    song_datum.append(title)
 
     data_set.append(song_datum)
     h5.close()
@@ -87,6 +101,8 @@ def get_data(filename):
 
 apply_to_all_files(msd_subset, func=get_data)
 
-main_dataframe = pd.DataFrame(data_set, columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo', 'year', 'album', 'artist name', 'title'])
+main_dataframe = pd.DataFrame(data_set,
+                              columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
+                                       'year', 'album', 'artist name', 'title'])
 
 main_dataframe.to_csv('data/data.csv')
