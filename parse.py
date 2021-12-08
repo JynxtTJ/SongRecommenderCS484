@@ -76,6 +76,8 @@ def get_data(filename):
     # HIHGLY INTERESTING FEATURE.
     # chroma_pitches.append(GETTERS.get_segments_pitches(h5))  # = shape (935, 12) normallized so range [0, 1]
 
+    song_datum.append(GETTERS.get_year(h5))
+    song_datum.append(GETTERS.get_release(h5))
     song_datum.append(GETTERS.get_artist_name(h5)) # shape = 1 (datum is string)
     song_datum.append(GETTERS.get_title(h5))
 
@@ -85,6 +87,6 @@ def get_data(filename):
 
 apply_to_all_files(msd_subset, func=get_data)
 
-main_dataframe = pd.DataFrame(data_set, columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo', 'artist name', 'title'])
+main_dataframe = pd.DataFrame(data_set, columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo', 'year', 'album', 'artist name', 'title'])
 
 main_dataframe.to_csv('data/data.csv')
