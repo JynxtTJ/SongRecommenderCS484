@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import csv
-import pandas as pd
 from scipy.fft import fft
 
 all_artist_names = set()
@@ -63,6 +62,22 @@ def func_to_get_artist_name(filename):
     artist_name = GETTERS.get_artist_name(h5)
     all_artist_names.add(artist_name)
     h5.close()
+
+def func_to_get_energy(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+
+    energy = calculate_energy(h5)
+    print(energy)
+    h5.close()
+
+
+def calculate_energy(h5):
+    # extract RMSE with librosa
+
+    pitch_series = GETTERS.get_segments_pitches(h5)
+
+    rms_h5 = librosa.feature.rms(pitch_series)
+    return rms_h5[0][0]
 
 
 def func_get_tags(filename):
@@ -123,7 +138,7 @@ def get_data(filename):
 
     song_datum.append(GETTERS.get_duration(h5))
     song_datum.append(GETTERS.get_artist_hotttnesss(h5))  # shape = 1 (on range [0,1])
-    song_datum.append(GETTERS.get_energy(h5))  # shape = 1 (on range [0, 1])
+    song_datum.append(calculate_energy(h5))  # shape = 1 (on range [0, 1])
     song_datum.append(GETTERS.get_loudness(h5))  # shape = 1 (db range)
 
     # WE want similar songs, not artists, while artists is useful we cannot simply base our
@@ -177,11 +192,21 @@ def get_data(filename):
 # for x in tags_set:
 #     print(x)
 
+def capture_feature_set():
+    apply_to_all_files(msd_subset, func=get_data)
+    main_dataframe = pd.DataFrame(data_set,
+                                  columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness',
+                                           'tempo',
+                                           'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name',
+                                           'title', 'enest terms'])
+    main_dataframe.to_csv('data/data.csv')
 
-apply_to_all_files(msd_subset, func=get_data)
-main_dataframe = pd.DataFrame(data_set,
-                              columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
-                                       'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name',
-                                       'title', 'enest terms'])
-main_dataframe.to_csv('data/data.csv')
 
+if __name__ == "__main__":
+    # apply_to_all_files(msd_subset, func=get_data)
+    # main_dataframe = pd.DataFrame(data_set,
+    #                               columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
+    #                                        'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name',
+    #                                        'title', 'enest terms'])
+    # main_dataframe.to_csv('data/data.csv')
+    apply_to_all_files(msd_subset, func=func_to_get_energy, NTimes=20)
