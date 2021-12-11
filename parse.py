@@ -17,6 +17,7 @@ all_artist_names = set()
 tags_set = []
 data_set = []
 
+# THIS MUST BE SET TO THE SUBSET LOCATION
 msd_subset = 'millionsongsubset'
 
 
@@ -192,14 +193,19 @@ def get_data(filename):
 # for x in tags_set:
 #     print(x)
 
-def capture_feature_set():
+def capture_feature_set(path_to_csv, path_to_msd_subset=None):
+    global msd_subset
+
+    if path_to_msd_subset is not None:
+        msd_subset = path_to_msd_subset
+
     apply_to_all_files(msd_subset, func=get_data)
     main_dataframe = pd.DataFrame(data_set,
                                   columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness',
                                            'tempo',
                                            'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name',
                                            'title', 'enest terms'])
-    main_dataframe.to_csv('data/data.csv')
+    main_dataframe.to_csv(path_to_csv)
 
 
 if __name__ == "__main__":

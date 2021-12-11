@@ -21,11 +21,11 @@ def get_similar_songs(dataset, song, artist):
     return similar_songs.iloc[2:12]
 
 
-def display_similar(path_to_data):
+def display_similar(path_to_data, title, artist):
     data = pd.read_csv(path_to_data, index_col=0)
 
     pd.set_option("display.max_rows", None, "display.max_columns", None)
-    print(get_similar_songs(data, "Panama (Remastered Album Version)", "Van Halen"))
+    print(get_similar_songs(data, title, artist))
 
 
 if __name__ == "__main__":
