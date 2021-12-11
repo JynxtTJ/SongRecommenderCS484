@@ -12,6 +12,7 @@ import librosa
 import librosa.display
 import csv
 import pandas as pd
+from scipy.fft import fft
 
 all_artist_names = set()
 data_set = []
@@ -33,13 +34,15 @@ def count_all_files(basedir, ext='.h5'):
     return cnt
 
 
-def apply_to_all_files(basedir, func=lambda x: x, ext='.h5'):
+def apply_to_all_files(basedir, func=lambda x: x, ext='.h5', doBreak=False):
     cnt = 0
     for root, dirs, files in os.walk(basedir):
         files = glob.glob(os.path.join(root, '*' + ext))
         cnt += len(files)
         for f in files:
             func(f)
+            if doBreak:
+                return cnt
 
     return cnt
 
@@ -52,10 +55,56 @@ def func_to_get_artist_name(filename):
     h5.close()
 
 
+def func_get_tags(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+
+    mbtags = GETTERS.get_artist_mbtags(h5)
+    print(mbtags)
+
+    h5.close()
+
+def func_get_enest_terms(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+
+    artterms = GETTERS.get_artist_terms(h5)
+    print(artterms)
+
+    h5.close()
+
+
+def func_to_get_cfft(filename):
+    h5 = GETTERS.open_h5_file_read(filename)
+
+    chroma = GETTERS.get_segments_pitches(h5)
+    chroma = np.array(chroma)
+    chroma = chroma.transpose()
+    print(chroma)
+    sample_rate = GETTERS.get_analysis_sample_rate(h5)
+    N, H = 2048, 1024
+
+    Y = np.abs(chroma)
+    plt.figure(figsize=(8, 3))
+    plt.xlabel('Time (frames)')
+    plt.ylabel('Frequency (bins)')
+
+    plt.imshow(Y, aspect='auto', origin='lower')
+
+    # librosa.display.specshow(librosa.amplitude_to_db(Y, ref=np.max),
+    #                          y_axis='linear', x_axis='time', sr=sample_rate, hop_length=H)
+
+    plt.tight_layout()
+    plt.colorbar()
+    plt.show()
+    print('The spectrogram Y has %d frequency bins and %d frames.' % (Y.shape[0], Y.shape[1]))
+    h5.close()
+
+
 def get_data(filename):
     h5 = GETTERS.open_h5_file_read(filename)
 
     song_datum = []
+
+    # ----------------- DATA POINTS -----------------
 
     song_datum.append(GETTERS.get_key(h5))  # shape = 1 [1, 12]
     song_datum.append(GETTERS.get_key_confidence(h5))  # shape = 1
@@ -72,8 +121,12 @@ def get_data(filename):
 
     song_datum.append(GETTERS.get_tempo(h5))  # shape = 1 (datum is BPM)
 
-    # HIHGLY INTERESTING FEATURE.
-    # chroma_pitches.append(GETTERS.get_segments_pitches(h5))  # = shape (935, 12) normallized so range [0, 1]
+    song_datum.append(GETTERS.get_mode(h5))
+    song_datum.append(GETTERS.get_mode_confidence(h5))
+
+    song_datum.append(GETTERS.get_danceability(h5))
+
+    # ----------------- TRACK INFO -----------------
 
     song_datum.append(GETTERS.get_year(h5))
 
@@ -89,15 +142,27 @@ def get_data(filename):
     title = title.decode('utf-8')
     song_datum.append(title)
 
+    # chroma_fft = GETTERS.get_segments_pitches(h5)
+    # chroma_fft = fft(chroma_fft).real
+    # song_datum.append(chroma_fft)
+
     data_set.append(song_datum)
     h5.close()
 
+# Chroma Analysis
+# apply_to_all_files(msd_subset, func=func_to_get_cfft, doBreak=True)
 
-apply_to_all_files(msd_subset, func=get_data)
+# Tag Analysis
+# Too inconsistent to be useful
+# apply_to_all_files(msd_subset, func=func_get_tags)
 
-main_dataframe = pd.DataFrame(data_set,
-                              columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
-                                       'year', 'album', 'artist name', 'title'])
 
-main_dataframe.to_csv('data/data.csv')
+apply_to_all_files(msd_subset, func=func_get_enest_terms)
+
+
+# apply_to_all_files(msd_subset, func=get_data)
+# main_dataframe = pd.DataFrame(data_set,
+#                               columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
+#                                        'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name', 'title'])
+# main_dataframe.to_csv('data/data.csv')
 
