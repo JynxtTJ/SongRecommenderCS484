@@ -15,6 +15,7 @@ import pandas as pd
 from scipy.fft import fft
 
 all_artist_names = set()
+tags_set = []
 data_set = []
 
 msd_subset = 'millionsongsubset'
@@ -34,14 +35,23 @@ def count_all_files(basedir, ext='.h5'):
     return cnt
 
 
-def apply_to_all_files(basedir, func=lambda x: x, ext='.h5', doBreak=False):
+def apply_to_all_files(basedir, func=lambda x: x, ext='.h5', doBreak=False, NTimes=0):
     cnt = 0
+    count_val = -1
+
+    if NTimes != 0:
+        count_val = 0
+
     for root, dirs, files in os.walk(basedir):
         files = glob.glob(os.path.join(root, '*' + ext))
         cnt += len(files)
         for f in files:
             func(f)
             if doBreak:
+                return cnt
+            if NTimes != 0:
+                count_val += 1
+            if count_val == NTimes:
                 return cnt
 
     return cnt
@@ -65,9 +75,10 @@ def func_get_tags(filename):
 
 def func_get_enest_terms(filename):
     h5 = GETTERS.open_h5_file_read(filename)
+    tags = GETTERS.get_artist_terms(h5)
+    tags = tags.astype('str')
 
-    artterms = GETTERS.get_artist_terms(h5)
-    print(artterms)
+    tags_set.append(tags)
 
     h5.close()
 
@@ -142,6 +153,11 @@ def get_data(filename):
     title = title.decode('utf-8')
     song_datum.append(title)
 
+    tags = GETTERS.get_artist_terms(h5)
+    tags = tags.astype('str')
+
+    song_datum.append(tags)
+
     # chroma_fft = GETTERS.get_segments_pitches(h5)
     # chroma_fft = fft(chroma_fft).real
     # song_datum.append(chroma_fft)
@@ -153,16 +169,19 @@ def get_data(filename):
 # apply_to_all_files(msd_subset, func=func_to_get_cfft, doBreak=True)
 
 # Tag Analysis
-# Too inconsistent to be useful
+# This one is too inconsistent to be useful
 # apply_to_all_files(msd_subset, func=func_get_tags)
 
 
-apply_to_all_files(msd_subset, func=func_get_enest_terms)
+# apply_to_all_files(msd_subset, func=func_get_enest_terms, NTimes=2)
+# for x in tags_set:
+#     print(x)
 
 
-# apply_to_all_files(msd_subset, func=get_data)
-# main_dataframe = pd.DataFrame(data_set,
-#                               columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
-#                                        'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name', 'title'])
-# main_dataframe.to_csv('data/data.csv')
+apply_to_all_files(msd_subset, func=get_data)
+main_dataframe = pd.DataFrame(data_set,
+                              columns=['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo',
+                                       'mode', 'mode_confidence', 'danceability', 'year', 'album', 'artist name',
+                                       'title', 'enest terms'])
+main_dataframe.to_csv('data/data.csv')
 

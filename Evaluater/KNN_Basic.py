@@ -1,29 +1,9 @@
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import euclidean_distances
 
-# num_found = 0
-#
-# for datum in data.itertuples():
-#     search_term = datum[10]
-#     result = data['title'].str.contains(search_term, case=False)
-#
-#     if result.empty:
-#         print("Not found " + str(search_term))
-#     else:
-#         num_found += 1
-#
-# print(num_found)
 
-# song = "I Didn't Mean To"
-# artist = "Casual"
-#
-# song_and_artist_data = data[(data['title'] == song) & (data['artist name'] == artist)]
-#
-# similar = data.copy()
-#
-# sound_properties = similar.loc[:, ['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo']]
-#
-# similar['Similarity'] = cosine_similarity(sound_properties, sound_properties.to_numpy()[song_and_artist_data.index[0], None]).squeeze()
-#
-# print(similar)
+data = pd.read_csv('../data/data.csv', index_col=0)
 
 
 def get_similar_songs(dataset, song, artist):
@@ -31,12 +11,12 @@ def get_similar_songs(dataset, song, artist):
 
     similar = dataset.copy()
 
-    sound_properties = similar.loc[:, ['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo', 'mode', 'mode_confidence', 'danceability']]
+    sound_properties = similar.loc[:, ['key', 'key confidence', 'duration', 'hotness', 'energy', 'loudness', 'tempo', 'mode', 'mode_confidence', 'danceability', 'enest terms']]
 
-    similar['Similarity'] = cosine_similarity(sound_properties, sound_properties.to_numpy()[
+    similar['Similarity'] = euclidean_distances(sound_properties, sound_properties.to_numpy()[
         song_and_artist_data.index[0], None]).squeeze()
 
-    similar = similar.sort_values(by='Similarity', ascending=False)
+    similar = similar.sort_values(by='Similarity', ascending=True)
 
     similar_songs = similar[[f'title', 'artist name', 'album', 'year', 'Similarity']]
 
